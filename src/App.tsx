@@ -182,7 +182,11 @@ export default function App() {
             <h3>{match.name}</h3>
 
             <div>
-              💰 총 배팅금: {totalByMatch(match.name).toLocaleString()}원
+              💰 총 배팅금:{" "}
+              {(
+                picks.filter((p) => p.match === match.name).length * SLOT_PRICE
+              ).toLocaleString()}
+              원
             </div>
 
             <table
@@ -196,7 +200,13 @@ export default function App() {
                 <tr>
                   <th></th>
                   {scores.map((s) => (
-                    <th key={s}>
+                    <th
+                      key={s}
+                      style={{
+                        whiteSpace: "nowrap", // ✅ 줄바꿈 방지 핵심
+                        fontSize: "11px", // ✅ 글씨도 살짝 줄이면 더 안정
+                      }}
+                    >
                       {match.teamA} {s}
                     </th>
                   ))}
@@ -215,10 +225,14 @@ export default function App() {
                         onClick={() => addTempPick(match.name, a, b)}
                         style={{
                           border: "1px solid #0f0",
-                          height: 40,
+                          height: 35,
                           background: "white",
                           color: "black",
                           cursor: "pointer",
+                          fontSize: "11px",
+                          lineHeight: "11px",
+                          wordBreak: "break-all",
+                          padding: "2px",
                         }}
                       >
                         {getNames(match.name, `${a}:${b}`)}
