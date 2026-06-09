@@ -7,7 +7,6 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 
-/** ✅ 타입 정의 */
 type PickType = {
   name: string;
   match: string;
@@ -18,31 +17,40 @@ const firebaseConfig = {
   apiKey: "AIzaSyDn...",
   authDomain: "world-f16fc.firebaseapp.com",
   projectId: "world-f16fc",
-  storageBucket: "world-f16fc.firebasestorage.app",
-  messagingSenderId: "470311560736",
-  appId: "1:470311560736:web:def5a90645b54171a7e45",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const matches = [
-  { id: 1, name: "[예선 1차전 6/12(금)]", teamA: "한국", teamB: "체코" },
-  { id: 2, name: "[예선 2차전 6/19(금)]", teamA: "한국", teamB: "멕시코" },
-  { id: 3, name: "[예선 3차전 6/25(목)]", teamA: "한국", teamB: "남아공" },
+  { id: 1, name: "[예선 1차전 6/12(금) 11:00]", teamA: "한국", teamB: "체코" },
+  {
+    id: 2,
+    name: "[예선 2차전 6/19(금) 10:00]",
+    teamA: "한국",
+    teamB: "멕시코",
+  },
+  {
+    id: 3,
+    name: "[예선 3차전 6/25(목) 10:00]",
+    teamA: "한국",
+    teamB: "남아공",
+  },
 ];
 
 const scores = [0, 1, 2, 3, 4, 5];
 const SLOT_PRICE = 2000;
 
 export default function App() {
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState("");
   const [picks, setPicks] = useState<PickType[]>([]);
   const [tempPicks, setTempPicks] = useState<PickType[]>([]);
-  const [ranking, setRanking] = useState<{ [key: string]: number }>({});
-  const [showRules, setShowRules] = useState<boolean>(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
-  /** ✅ Firestore 데이터 */
+  const [ranking, setRanking] = useState<{ [key: string]: number }>({});
+  const [results, setResults] = useState<{ [key: string]: string }>({});
+
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "picks"), (snap) => {
       const data: PickType[] = snap.docs.map((doc) => doc.data() as PickType);
@@ -51,7 +59,7 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  /** ✅ 랭킹 계산 */
+  // 랭킹 계산
   useEffect(() => {
     const r: { [key: string]: number } = {};
     picks.forEach((p) => {
@@ -60,7 +68,7 @@ export default function App() {
     setRanking(r);
   }, [picks]);
 
-  /** ✅ 선택 */
+  // 선택
   const addTempPick = (match: string, a: number, b: number) => {
     if (!name) return alert("이름 입력");
 
@@ -84,31 +92,61 @@ export default function App() {
     setTempPicks([...tempPicks, { name, match, score }]);
   };
 
-  /** ✅ 제출 */
+  // 제출
   const submitPicks = async () => {
     for (let p of tempPicks) {
       await addDoc(collection(db, "picks"), p);
     }
     setTempPicks([]);
+    setSubmitted(true);
   };
 
-  /** ✅ 이름 표시 */
+  const cancelSubmit = () => {
+    setSubmitted(false);
+  };
+
   const getNames = (match: string, score: string) => {
-    const committed = picks
+    if (!submitted) return "";
+    return picks
       .filter((p) => p.match === match && p.score === score)
-      .map((p) => p.name);
-
-    const tempMine = tempPicks
-      .filter((p) => p.match === match && p.score === score)
-      .map((p) => p.name + "(선택)");
-
-    return [...committed, ...tempMine].join(", ");
+      .map((p) => p.name)
+      .join(", ");
   };
 
-  /** ✅ 금액 */
+  // 배팅금
   const totalByMatch = (match: string) => {
+    if (!submitted) {
+      const mine = tempPicks.filter((p) => p.match === match).length;
+      return mine * SLOT_PRICE;
+    }
     const count = picks.filter((p) => p.match === match).length;
     return count * SLOT_PRICE;
+  };
+
+  const totalAll = picks.length * SLOT_PRICE;
+
+  // ✅ 결과 입력
+  const handleResult = (match: string, value: string) => {
+    setResults((prev) => ({ ...prev, [match]: value }));
+  };
+
+  // ✅ 당첨자 계산
+  const getWinners = (match: string) => {
+    const result = results[match];
+    if (!result) return [];
+
+    return picks.filter((p) => p.match === match && p.score === result);
+  };
+
+  // ✅ 상금 계산
+  const getPrize = (match: string) => {
+    const winners = getWinners(match);
+    const total = picks.filter((p) => p.match === match).length * SLOT_PRICE;
+
+    if (winners.length === 0) return "환불";
+
+    const prize = total / winners.length;
+    return prize.toLocaleString() + "원";
   };
 
   return (
@@ -134,11 +172,10 @@ export default function App() {
         <div
           onClick={() => setShowRules(!showRules)}
           style={{
+            marginBottom: 20,
             background: "#111",
             padding: 10,
-            borderRadius: 8,
             cursor: "pointer",
-            marginBottom: 20,
           }}
         >
           📜 게임 룰 {showRules ? "▲" : "▼"}
@@ -146,19 +183,24 @@ export default function App() {
             <div style={{ fontSize: 13 }}>
               <div>1. 슬롯당 2000원</div>
               <div>2. 경기당 최대 5개</div>
-              <div>3. 동일 결과 N분할</div>
+              <div>3. 동일 결과 N분배</div>
               <div>4. 단독 적중 Full</div>
               <div>5. 승자 없으면 환불</div>
             </div>
           )}
         </div>
 
-        {/* 표 */}
+        {/* 계좌 */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          💳 카카오 or 110-339-972323 (신한, 신지예)
+        </div>
+
+        {/* 경기 */}
         {matches.map((match) => (
-          <div key={match.id} style={{ textAlign: "center", marginBottom: 30 }}>
+          <div key={match.id} style={{ marginBottom: 30, textAlign: "center" }}>
             <h3>{match.name}</h3>
 
-            <div style={{ marginBottom: 8 }}>
+            <div>
               💰 총 배팅금: {totalByMatch(match.name).toLocaleString()}원
             </div>
 
@@ -186,35 +228,73 @@ export default function App() {
                     <td>
                       {match.teamB} {a}
                     </td>
-                    {scores.map((b) => {
-                      const score = `${a}:${b}`;
-                      return (
-                        <td
-                          key={b}
-                          onClick={() => addTempPick(match.name, a, b)}
-                          style={{
-                            border: "1px solid #0f0",
-                            height: 40,
-                            background: "white",
-                            color: "black",
-                            fontSize: 11,
-                            cursor: "pointer",
-                          }}
-                        >
-                          {getNames(match.name, score)}
-                        </td>
-                      );
-                    })}
+                    {scores.map((b) => (
+                      <td
+                        key={b}
+                        onClick={() => addTempPick(match.name, a, b)}
+                        style={{
+                          border: "1px solid #0f0",
+                          height: 40,
+                          background: "white",
+                          color: "black",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {getNames(match.name, `${a}:${b}`)}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {/* ✅ 결과 */}
+            <div style={{ marginTop: 10 }}>
+              🎯 결과 :
+              <input
+                placeholder="예: 2:1"
+                value={results[match.name] || ""}
+                onChange={(e) => handleResult(match.name, e.target.value)}
+                style={{ marginLeft: 10 }}
+              />
+              <div>
+                🏆 당첨자 :
+                {getWinners(match.name)
+                  .map((w) => w.name)
+                  .join(", ") || " 없음"}
+              </div>
+              <div>
+                💰 1인당 상금 :
+                {(() => {
+                  const total =
+                    picks.filter((p) => p.match === match.name).length *
+                    SLOT_PRICE;
+
+                  const winners = getWinners(match.name);
+
+                  if (winners.length === 0) return " 환불";
+
+                  const per = Math.floor(total / winners.length);
+
+                  return (
+                    <>
+                      {" "}
+                      {total.toLocaleString()} ÷ {winners.length} ={" "}
+                      {per.toLocaleString()}원
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
         ))}
 
-        <button onClick={submitPicks} style={{ width: "100%", marginTop: 20 }}>
-          ✅ 제출
-        </button>
+        {/* 버튼 */}
+        {!submitted && (
+          <button onClick={submitPicks} style={{ width: "100%" }}>
+            ✅ 제출
+          </button>
+        )}
 
         {/* 랭킹 */}
         <div
@@ -222,15 +302,67 @@ export default function App() {
             marginTop: 30,
             padding: 20,
             border: "2px solid gold",
-            borderRadius: 10,
           }}
         >
-          <h2>🏆 RANKING</h2>
+          <h2>🏆 총 배팅액</h2>
 
           {Object.entries(ranking)
             .sort((a, b) => b[1] - a[1])
-            .map(([n, c], i) => (
-              <div key={n}>{`${i + 1}. ${n} (${c}개)`}</div>
+            .map(([name, count], i) => {
+              // ✅ 배팅 총액 = 선택 개수 × 슬롯 가격
+              const totalAmount = count * SLOT_PRICE;
+
+              return (
+                <div key={name}>
+                  {i + 1}. {name} ({count}개)
+                  <span style={{ marginLeft: 10 }}>
+                    💰 {totalAmount.toLocaleString()}원
+                  </span>
+                </div>
+              );
+            })}
+
+          <h2>🏆 최종 순이익 랭킹</h2>
+
+          {Object.keys(ranking)
+            .map((name) => {
+              let profit = 0;
+
+              matches.forEach((match) => {
+                const result = results[match.name];
+                if (!result) return;
+
+                const all = picks.filter((p) => p.match === match.name);
+                const total = all.length * SLOT_PRICE;
+
+                const winners = all.filter((p) => p.score === result);
+                if (winners.length === 0) return;
+
+                const per = Math.floor(total / winners.length);
+
+                const myWins = winners.filter((w) => w.name === name).length;
+                const mySpend =
+                  all.filter((p) => p.name === name).length * SLOT_PRICE;
+
+                profit += per * myWins - mySpend;
+              });
+
+              return { name, profit };
+            })
+            .sort((a, b) => b.profit - a.profit)
+            .map((p, i) => (
+              <div key={p.name}>
+                {i + 1}. {p.name}{" "}
+                <span
+                  style={{
+                    marginLeft: 10,
+                    color: p.profit >= 0 ? "#0f0" : "#f66",
+                  }}
+                >
+                  {p.profit >= 0 ? "+" : ""}
+                  {p.profit.toLocaleString()}원{i === 0 && " 🔥"}
+                </span>
+              </div>
             ))}
         </div>
       </div>
