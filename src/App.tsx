@@ -7,6 +7,13 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 
+/** ✅ 타입 정의 */
+type PickType = {
+  name: string;
+  match: string;
+  score: string;
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyDn...",
   authDomain: "world-f16fc.firebaseapp.com",
@@ -20,51 +27,41 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const matches = [
-  { id: 1, name: "[예선 1차전 6/12(금) 11:00]", teamA: "한국", teamB: "체코" },
-  {
-    id: 2,
-    name: "[예선 2차전 6/19(금) 10:00]",
-    teamA: "한국",
-    teamB: "멕시코",
-  },
-  {
-    id: 3,
-    name: "[예선 3차전 6/25(목) 10:00]",
-    teamA: "한국",
-    teamB: "남아공",
-  },
+  { id: 1, name: "[예선 1차전 6/12(금)]", teamA: "한국", teamB: "체코" },
+  { id: 2, name: "[예선 2차전 6/19(금)]", teamA: "한국", teamB: "멕시코" },
+  { id: 3, name: "[예선 3차전 6/25(목)]", teamA: "한국", teamB: "남아공" },
 ];
 
 const scores = [0, 1, 2, 3, 4, 5];
 const SLOT_PRICE = 2000;
 
 export default function App() {
-  const [name, setName] = useState("");
-  const [picks, setPicks] = useState([]);
-  const [tempPicks, setTempPicks] = useState([]);
-  const [ranking, setRanking] = useState({});
-  const [showRules, setShowRules] = useState(false);
+  const [name, setName] = useState<string>("");
+  const [picks, setPicks] = useState<PickType[]>([]);
+  const [tempPicks, setTempPicks] = useState<PickType[]>([]);
+  const [ranking, setRanking] = useState<{ [key: string]: number }>({});
+  const [showRules, setShowRules] = useState<boolean>(false);
 
-  // ✅ 실시간 데이터 가져오기
+  /** ✅ Firestore 데이터 */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "picks"), (snap) => {
-      const data = snap.docs.map((doc) => doc.data());
+      const data: PickType[] = snap.docs.map((doc) => doc.data() as PickType);
       setPicks(data);
     });
     return () => unsub();
   }, []);
 
-  // ✅ 랭킹 계산
+  /** ✅ 랭킹 계산 */
   useEffect(() => {
-    const r = {};
+    const r: { [key: string]: number } = {};
     picks.forEach((p) => {
       r[p.name] = (r[p.name] || 0) + 1;
     });
     setRanking(r);
   }, [picks]);
 
-  // ✅ 선택
-  const addTempPick = (match, a, b) => {
+  /** ✅ 선택 */
+  const addTempPick = (match: string, a: number, b: number) => {
     if (!name) return alert("이름 입력");
 
     const score = `${a}:${b}`;
@@ -87,7 +84,7 @@ export default function App() {
     setTempPicks([...tempPicks, { name, match, score }]);
   };
 
-  // ✅ 제출
+  /** ✅ 제출 */
   const submitPicks = async () => {
     for (let p of tempPicks) {
       await addDoc(collection(db, "picks"), p);
@@ -95,8 +92,8 @@ export default function App() {
     setTempPicks([]);
   };
 
-  // ✅ 이름 표시
-  const getNames = (match, score) => {
+  /** ✅ 이름 표시 */
+  const getNames = (match: string, score: string) => {
     const committed = picks
       .filter((p) => p.match === match && p.score === score)
       .map((p) => p.name);
@@ -108,8 +105,8 @@ export default function App() {
     return [...committed, ...tempMine].join(", ");
   };
 
-  // ✅ 경기별 금액
-  const totalByMatch = (match) => {
+  /** ✅ 금액 */
+  const totalByMatch = (match: string) => {
     const count = picks.filter((p) => p.match === match).length;
     return count * SLOT_PRICE;
   };
@@ -233,9 +230,7 @@ export default function App() {
           {Object.entries(ranking)
             .sort((a, b) => b[1] - a[1])
             .map(([n, c], i) => (
-              <div key={n}>
-                {i + 1}. {n} ({c}개)
-              </div>
+              <div key={n}>{`${i + 1}. ${n} (${c}개)`}</div>
             ))}
         </div>
       </div>
