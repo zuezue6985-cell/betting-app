@@ -192,7 +192,7 @@ export default function App() {
 
         {/* 계좌 */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          💳 카카오 or 110-339-972323 (신한, 신지예)
+          💳 계좌 : 카카오 or 110-339-972323 (신한, 신지예)
         </div>
 
         {/* 경기 */}
