@@ -22,17 +22,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const ADMIN = "신지예";
+
 const matches = [
-  { id: 1, name: "[예선 1차전 6/12(금) 11:00]", teamA: "한국", teamB: "체코" },
+  { id: 1, name: "[예선 1차전 6/12(금)]", teamA: "한국", teamB: "체코" },
   {
     id: 2,
-    name: "[예선 2차전 6/19(금) 10:00]",
+    name: "[예선 2차전 6/19(금)]",
     teamA: "한국",
     teamB: "멕시코",
   },
   {
     id: 3,
-    name: "[예선 3차전 6/25(목) 10:00]",
+    name: "[예선 3차전 6/25(목)]",
     teamA: "한국",
     teamB: "남아공",
   },
@@ -59,7 +61,6 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // 랭킹 계산
   useEffect(() => {
     const r: { [key: string]: number } = {};
     picks.forEach((p) => {
@@ -68,7 +69,6 @@ export default function App() {
     setRanking(r);
   }, [picks]);
 
-  // 선택
   const addTempPick = (match: string, a: number, b: number) => {
     if (!name) return alert("이름 입력");
 
@@ -92,7 +92,6 @@ export default function App() {
     setTempPicks([...tempPicks, { name, match, score }]);
   };
 
-  // 제출
   const submitPicks = async () => {
     for (let p of tempPicks) {
       await addDoc(collection(db, "picks"), p);
@@ -105,15 +104,14 @@ export default function App() {
     setSubmitted(false);
   };
 
+  /** ✅ 🔥 Firestore 데이터 무조건 표시 */
   const getNames = (match: string, score: string) => {
-    if (!submitted) return "";
     return picks
       .filter((p) => p.match === match && p.score === score)
       .map((p) => p.name)
       .join(", ");
   };
 
-  // 배팅금
   const totalByMatch = (match: string) => {
     if (!submitted) {
       const mine = tempPicks.filter((p) => p.match === match).length;
@@ -123,30 +121,14 @@ export default function App() {
     return count * SLOT_PRICE;
   };
 
-  const totalAll = picks.length * SLOT_PRICE;
-
-  // ✅ 결과 입력
   const handleResult = (match: string, value: string) => {
     setResults((prev) => ({ ...prev, [match]: value }));
   };
 
-  // ✅ 당첨자 계산
   const getWinners = (match: string) => {
     const result = results[match];
     if (!result) return [];
-
     return picks.filter((p) => p.match === match && p.score === result);
-  };
-
-  // ✅ 상금 계산
-  const getPrize = (match: string) => {
-    const winners = getWinners(match);
-    const total = picks.filter((p) => p.match === match).length * SLOT_PRICE;
-
-    if (winners.length === 0) return "환불";
-
-    const prize = total / winners.length;
-    return prize.toLocaleString() + "원";
   };
 
   return (
@@ -195,7 +177,6 @@ export default function App() {
           💳 계좌 : 카카오 or 110-339-972323 (신한, 신지예)
         </div>
 
-        {/* 경기 */}
         {matches.map((match) => (
           <div key={match.id} style={{ marginBottom: 30, textAlign: "center" }}>
             <h3>{match.name}</h3>
@@ -251,12 +232,18 @@ export default function App() {
             {/* ✅ 결과 */}
             <div style={{ marginTop: 10 }}>
               🎯 결과 :
-              <input
-                placeholder="예: 2:1"
-                value={results[match.name] || ""}
-                onChange={(e) => handleResult(match.name, e.target.value)}
-                style={{ marginLeft: 10 }}
-              />
+              {name === ADMIN ? (
+                <input
+                  placeholder="예: 2:1"
+                  value={results[match.name] || ""}
+                  onChange={(e) => handleResult(match.name, e.target.value)}
+                  style={{ marginLeft: 10 }}
+                />
+              ) : (
+                <span style={{ marginLeft: 10 }}>
+                  {results[match.name] || "-"}
+                </span>
+              )}
               <div>
                 🏆 당첨자 :
                 {getWinners(match.name)
@@ -289,38 +276,26 @@ export default function App() {
           </div>
         ))}
 
-        {/* 버튼 */}
         {!submitted && (
           <button onClick={submitPicks} style={{ width: "100%" }}>
             ✅ 제출
           </button>
         )}
 
-        {/* 랭킹 */}
-        <div
-          style={{
-            marginTop: 30,
-            padding: 20,
-            border: "2px solid gold",
-          }}
-        >
+        {/* ✅ 기존 랭킹 그대로 유지 */}
+        <div style={{ marginTop: 30, padding: 20, border: "2px solid gold" }}>
           <h2>🏆 총 배팅액</h2>
 
           {Object.entries(ranking)
             .sort((a, b) => b[1] - a[1])
-            .map(([name, count], i) => {
-              // ✅ 배팅 총액 = 선택 개수 × 슬롯 가격
-              const totalAmount = count * SLOT_PRICE;
-
-              return (
-                <div key={name}>
-                  {i + 1}. {name} ({count}개)
-                  <span style={{ marginLeft: 10 }}>
-                    💰 {totalAmount.toLocaleString()}원
-                  </span>
-                </div>
-              );
-            })}
+            .map(([name, count], i) => (
+              <div key={name}>
+                {i + 1}. {name} ({count}개)
+                <span style={{ marginLeft: 10 }}>
+                  💰 {(count * SLOT_PRICE).toLocaleString()}원
+                </span>
+              </div>
+            ))}
 
           <h2>🏆 최종 순이익 랭킹</h2>
 
