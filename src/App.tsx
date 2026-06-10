@@ -156,25 +156,31 @@ export default function App() {
           style={{
             marginBottom: 20,
             background: "#111",
-            padding: 10,
+            padding: 12,
             cursor: "pointer",
           }}
         >
-          📜 게임 룰 {showRules ? "▲" : "▼"}
+          📜 게임 룰 / 📊 정산 방식 {showRules ? "▲" : "▼"}
           {showRules && (
             <div style={{ fontSize: 13 }}>
+              <div>📜 게임 룰</div>
               <div>1. 슬롯당 2000원</div>
               <div>2. 경기당 최대 5개</div>
               <div>3. 동일 결과 N분배</div>
               <div>4. 단독 적중 Full</div>
               <div>5. 승자 없으면 환불</div>
+
+              <div style={{ marginTop: 10 }}>
+                <div>📊 정산 방식</div>
+                <div>• 모든 경기 종료 후 "최종 순이익 기준" 정산</div>
+                <div>• 순이익 = (총 당첨금 - 총 베팅금)</div>
+                <div>• 마이너스(-) → 해당 금액 입금</div>
+                <div>• 플러스(+) → 해당 금액 지급</div>
+                <div>• 입금 확인 후 일괄 지급 진행</div>
+                <div>• 💳 계좌 : 카카오 or 110-339-972323 (신한, 신지예)</div>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* 계좌 */}
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          💳 계좌 : 카카오 or 110-339-972323 (신한, 신지예)
         </div>
 
         {matches.map((match) => (
@@ -182,7 +188,7 @@ export default function App() {
             <h3>{match.name}</h3>
 
             <div>
-              💰 총 배팅금:{" "}
+              💰 총 베팅금:{" "}
               {(
                 picks.filter((p) => p.match === match.name).length * SLOT_PRICE
               ).toLocaleString()}
@@ -298,7 +304,7 @@ export default function App() {
 
         {/* ✅ 기존 랭킹 그대로 유지 */}
         <div style={{ marginTop: 30, padding: 20, border: "2px solid gold" }}>
-          <h2>🏆 총 배팅액</h2>
+          <h2>🏆 총 베팅액</h2>
 
           {Object.entries(ranking)
             .sort((a, b) => b[1] - a[1])
