@@ -105,11 +105,17 @@ export default function App() {
   };
 
   /** ✅ 🔥 Firestore 데이터 무조건 표시 */
+
   const getNames = (match: string, score: string) => {
-    return picks
+    const committed = picks
       .filter((p) => p.match === match && p.score === score)
-      .map((p) => p.name)
-      .join(", ");
+      .map((p) => p.name);
+
+    const temp = tempPicks
+      .filter((p) => p.match === match && p.score === score)
+      .map((p) => p.name + " (선택)");
+
+    return [...committed, ...temp].join(", ");
   };
 
   const totalByMatch = (match: string) => {
