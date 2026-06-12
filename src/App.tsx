@@ -156,7 +156,7 @@ export default function App() {
         <input
           placeholder="이름 입력"
           value={name}
-          disabled={false}
+          disabled={isClosed && name !== ADMIN}
           onChange={(e) => setName(e.target.value)}
           style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
