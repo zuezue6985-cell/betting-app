@@ -24,6 +24,8 @@ const db = getFirestore(app);
 
 const ADMIN = "신지예";
 
+const DEADLINE = new Date("2026-06-12T10:00:00+09:00");
+
 const matches = [
   { id: 1, name: "[예선 1차전 6/12(금)]", teamA: "한국", teamB: "체코" },
   {
@@ -52,6 +54,8 @@ export default function App() {
 
   const [ranking, setRanking] = useState<{ [key: string]: number }>({});
   const [results, setResults] = useState<{ [key: string]: string }>({});
+
+  const isClosed = new Date() > DEADLINE;
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "picks"), (snap) => {
@@ -152,9 +156,16 @@ export default function App() {
         <input
           placeholder="이름 입력"
           value={name}
+          disabled={isClosed && name !== ADMIN}
           onChange={(e) => setName(e.target.value)}
           style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
+
+        {isClosed && (
+          <div style={{ color: "red", textAlign: "center", marginBottom: 10 }}>
+            🚫 참여가 마감되었습니다
+          </div>
+        )}
 
         {/* 룰 */}
         <div
