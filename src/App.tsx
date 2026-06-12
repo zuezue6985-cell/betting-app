@@ -271,7 +271,10 @@ export default function App() {
                         style={{
                           border: "1px solid #0f0",
                           height: 35,
-                          background: "white",
+                          background:
+                            fixedData[match.name]?.result === `${a}:${b}`
+                              ? "#ddd"
+                              : "white",
                           color: "black",
                           cursor: "pointer",
                           fontSize: "11px",
