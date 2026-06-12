@@ -156,7 +156,7 @@ export default function App() {
         <input
           placeholder="이름 입력"
           value={name}
-          disabled={isClosed && name !== ADMIN}
+          disabled={false}
           onChange={(e) => setName(e.target.value)}
           style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
@@ -245,7 +245,10 @@ export default function App() {
                     {scores.map((b) => (
                       <td
                         key={b}
-                        onClick={() => addTempPick(match.name, a, b)}
+                        onClick={() => {
+                          if (isClosed && name !== ADMIN) return;
+                          addTempPick(match.name, a, b);
+                        }}
                         style={{
                           border: "1px solid #0f0",
                           height: 35,
