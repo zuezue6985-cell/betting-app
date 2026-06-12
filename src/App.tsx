@@ -48,7 +48,7 @@ const fixedData: {
   [key: string]: { result: string; winners: string; prize: string };
 } = {
   "[예선 1차전 6/12(금)]": {
-    result: "2:1",
+    result: "1:2",
     winners: "이지민, 이동욱, 임보미, 김경태, 김태우, 이현정, 임채환, 이인규",
     prize: "120,000 ÷ 8 = 15,000원",
   },
@@ -325,13 +325,23 @@ export default function App() {
               let profit = 0;
 
               matches.forEach((match) => {
-                const result = results[match.name];
+                const result = fixedData[match.name]?.result;
                 if (!result) return;
 
                 const all = picks.filter((p) => p.match === match.name);
+
+                const winnerNames =
+                  fixedData[match.name]?.winners
+                    ?.split(",")
+                    .map((n) => n.trim())
+                    .filter((n) => n !== "") || [];
+
                 const total = all.length * SLOT_PRICE;
 
-                const winners = all.filter((p) => p.score === result);
+                const winners = all.filter(
+                  (p) => winnerNames.includes(p.name) && p.score === result
+                );
+
                 if (winners.length === 0) return;
 
                 const per = Math.floor(total / winners.length);
