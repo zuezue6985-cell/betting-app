@@ -44,6 +44,25 @@ const matches = [
 
 const scores = [0, 1, 2, 3, 4, 5];
 const SLOT_PRICE = 2000;
+const fixedData: {
+  [key: string]: { result: string; winners: string; prize: string };
+} = {
+  "[예선 1차전 6/12(금)]": {
+    result: "2:1",
+    winners: "이지민, 이동욱, 임보미, 김경태, 김태우, 이현정, 임채환, 이인규",
+    prize: "120,000 ÷ 8 = 15,000원",
+  },
+  "[예선 2차전 6/19(금)]": {
+    result: " ",
+    winners: " ",
+    prize: " ",
+  },
+  "[예선 3차전 6/25(목)]": {
+    result: " ",
+    winners: " ",
+    prize: " ",
+  },
+};
 
 export default function App() {
   const [name, setName] = useState("");
@@ -271,47 +290,9 @@ export default function App() {
 
             {/* ✅ 결과 */}
             <div style={{ marginTop: 10 }}>
-              🎯 결과 :
-              {name === ADMIN ? (
-                <input
-                  placeholder="예: 2:1"
-                  value={results[match.name] || ""}
-                  onChange={(e) => handleResult(match.name, e.target.value)}
-                  style={{ marginLeft: 10 }}
-                />
-              ) : (
-                <span style={{ marginLeft: 10 }}>
-                  {results[match.name] || "-"}
-                </span>
-              )}
-              <div>
-                🏆 당첨자 :
-                {getWinners(match.name)
-                  .map((w) => w.name)
-                  .join(", ") || " 없음"}
-              </div>
-              <div>
-                💰 1인당 상금 :
-                {(() => {
-                  const total =
-                    picks.filter((p) => p.match === match.name).length *
-                    SLOT_PRICE;
-
-                  const winners = getWinners(match.name);
-
-                  if (winners.length === 0) return " 환불";
-
-                  const per = Math.floor(total / winners.length);
-
-                  return (
-                    <>
-                      {" "}
-                      {total.toLocaleString()} ÷ {winners.length} ={" "}
-                      {per.toLocaleString()}원
-                    </>
-                  );
-                })()}
-              </div>
+              🎯 결과 : {fixedData[match.name]?.result || "-"}
+              <div>🏆 당첨자 : {fixedData[match.name]?.winners || " 없음"}</div>
+              <div>💰 1인당 상금 : {fixedData[match.name]?.prize || "-"}</div>
             </div>
           </div>
         ))}
