@@ -58,9 +58,9 @@ const fixedData: {
     prize: "104,000 ÷ 5 = 20,800원",
   },
   "[예선 3차전 6/25(목)]": {
-    result: " ",
-    winners: " ",
-    prize: " ",
+    result: "1:0",
+    winners: "강현구",
+    prize: "94,000원",
   },
 };
 
